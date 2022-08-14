@@ -1,0 +1,329 @@
+//C++
+
+
+
+#include<iostream>
+#include<conio.h>
+#include<fstream>
+#include<stdlib.h>
+#include<string.h>
+
+using namespace std;
+
+
+class Shop_item_master
+{
+   public:
+   	int item_no;
+   	char name[20];
+   	int quantity_available;
+   
+   void input_item_master()
+   {
+   cout<<"\n\t\tEnter Item no:";cin>>item_no;
+   cout<<"\t\tEnter Product Name:";cin>>name;
+   cout<<"\t\tEnter Quantity:";cin>>quantity_available;
+   
+   }
+   
+   void show_item_master()
+   {
+   cout<<"\n\t"<<item_no<<"\t"<<name<<"\t"<<quantity_available;
+   }
+   
+};
+
+
+class Shop_item_transaction
+{
+   
+   public:
+   	char transaction[20];
+   	int quantity;
+   int item_no;
+	void input_item_transaction()
+   {
+   cout<<"\n\t\tEnter Item no:";cin>>item_no;
+
+   cout<<"\t\tEnter Quantity:";cin>>quantity;
+  
+   cout<<"\t\tEnter Transaction type (Sell/ Purchase):";cin>>transaction;
+  
+   
+   }
+	void show_item_transaction()
+   {
+   cout<<"\n\t"<<item_no<<"\t"<<quantity<<"\t"<<transaction;
+   }	
+};
+
+
+void insert_item_master()
+{
+	fstream file;
+	Shop_item_master std;
+	char ans;
+    file.open("Item_Master.dat",ios::out|ios::app|ios::binary);
+		if(file.bad())
+		{
+		cout<<"\n\tUnable to open file";getch();exit(1);
+		}
+		do{
+		std.input_item_master();
+		file.write((char*)&std,sizeof(std));
+		cout<<"\n\tRecord saved.\n\n\t Want to continue(y/n)?:";
+		cin>>ans;
+		}while(ans=='y');
+		file.close();
+		cout<<"\n\t Thank you. Your records are saved!";
+
+		
+}
+
+
+void view_item_master()
+{
+	fstream file;
+	Shop_item_master std;
+
+	file.open("Item_Master.dat",ios::in);
+	    if(file.bad())
+	    {
+	    cout<<"\n\tUnable to open file";getch();
+	    }
+	    else
+	    {
+	
+	    while(1)
+	    {
+	       file.read((char*)&std,sizeof(std));
+	       if(file.eof())break;
+		   std.show_item_master();
+	
+	    }
+	      
+		
+		file.close();
+	    }
+	
+}
+
+
+void delete_item_master()
+{
+	fstream file, file1; //library class from fstream header file 
+    Shop_item_master std;
+	 int item_no,flag=0;
+		file.open("Item_Master.dat",ios::in);
+        file1.open("shop.tmp",ios::out);
+	    if(file.bad())
+	    {
+	       cout<<"\n\tUnable to open file";getch();exit(1);
+	    }
+	    cout<<"\n\tEnter Item no:";cin>>item_no;
+	    while(1)
+	    {
+	       file.read((char*)&std,sizeof(std));
+	       if(file.eof())break;
+	       else if(item_no!=std.item_no)
+	       file1.write((char*)&std,sizeof(std));
+	       else if(item_no==std.item_no)
+	       {
+		   flag=1;
+	       }
+	    }
+	    if(flag==0)
+	    {
+	      cout<<"\n\tItem not found";
+	    }
+	    else
+	    {
+	   	file.close();  
+	    file1.close();
+		
+	      remove("Item_Master.dat");
+	      rename("shop.tmp","Item_Master.dat");
+			
+	      cout<<"\n\tReocrd deleted";
+	   }
+	   
+	}
+
+
+int update_item_master(int item_no,int quantity,char type[])
+{
+	//cout<<item_no<<quantity<<type;
+	fstream file,file1;
+    Shop_item_master std1;
+   int roll,flag=0;
+
+   file.open("Item_Master.dat",ios::in);
+   file1.open("shop.tmp",ios::out);
+   if(file.bad())
+   {
+       cout<<"\tUnable to open file";getch();exit(1);
+   }
+   
+   while(1)
+   {
+       file.read((char*)&std1,sizeof(std1));
+       
+       if(file.eof())break;
+       else if(item_no!=std1.item_no)
+	   file1.write((char*)&std1,sizeof(std1));
+       else if(item_no==std1.item_no)
+       {
+       	if(strcmp(type,"Sell")==0)
+		   {// subtracting Quantity Available in Item Master file by Quantity in Item Transaction file
+		   	std1.quantity_available=std1.quantity_available-quantity;
+		   }
+		else
+		  {// adding Quantity Available in Item Master file by Quantity in Item Transaction file
+			std1.quantity_available=std1.quantity_available+quantity;
+		  }
+	   flag=1;
+	   
+	  
+	   file1.write((char*)&std1,sizeof(std1));
+       }
+   }
+   if(flag==0)
+   {
+      //Item not found
+      return 0;
+   }
+   else
+   {
+   	 file.close();  
+	 file1.close();
+      remove("Item_Master.dat");
+      rename("shop.tmp","Item_Master.dat");
+     // Reocrd updated
+      return 1;
+   }
+  
+}
+
+
+void Input_item_transaction()
+{
+	fstream file1;
+	Shop_item_transaction std;
+	char ans;
+	int found;
+	file1.open("Item_Transaction1.dat",ios::out|ios::app|ios::binary);
+		if(file1.bad())
+		{
+		cout<<"\n\tUnable to open file";getch();exit(1);
+		}
+		do{
+		std.input_item_transaction();
+		found=update_item_master(std.item_no,std.quantity,std.transaction);
+		if(found!=0)//to check the data in Item Master get updated or not 
+		{
+		
+		file1.write((char*)&std,sizeof(std));
+		cout<<"\n\tRecord saved..";
+	    }else
+	    {
+	    cout<<"\n\tRecord not found in Item Master file..";	
+		}
+		cout<<"\n\n\t.Want to continue (y/n)?:";
+		cin>>ans;
+		}while(ans=='y');
+		file1.close();
+		
+		cout<<"\n\t Thank you. Your records are saved!";
+
+}
+
+
+void view_item_transaction()
+{
+	fstream file; //library class from fstream header file 
+    Shop_item_transaction std;
+	file.open("Item_Transaction1.dat",ios::in);
+	    if(file.bad())
+	    {
+	    cout<<"\n\tUnable to open file";getch();
+	    }
+	    else
+	    {
+	
+	    while(1)
+	    {
+	       file.read((char*)&std,sizeof(std));
+	       if(file.eof())break;
+		   std.show_item_transaction();
+	
+	    }
+	      
+		
+		file.close();
+	    }
+}
+
+
+
+main()
+{
+	
+	
+    cout<<"\n\t\t\t\t\t\t INVENTORY CONTROL SYSTEM\n\n";
+    cout<<"\n\t\t\t\t\t\t     SHREYAS SUPERMARKET";
+    int option1, option2, option3;
+    char ans;
+    do{
+	
+	cout<<"\n\tEnter 1 for Item Master :";
+	cout<<"\n\tEnter 2 for Item Transaction :";
+	cout<<"\n\n\tEnter Your choice (1, 2) :\t";
+	cin>>option1;
+	if(option1==1)
+	{
+	cout<<"\n\tEnter 1 to enter data in Item Master :";
+	cout<<"\n\tEnter 2 to view data in Item Master  :";
+	cout<<"\n\tEnter 3 to delete in Item Master  :";
+	cout<<"\n\n\tEnter Your choice (1, 2, 3) :\t";
+	cin>>option2;	
+	if(option2==1)
+	{
+		 insert_item_master();
+	}
+	if(option2==2)
+	{
+		
+		 view_item_master();
+	}
+	if(option2==3)
+	{	
+	    delete_item_master();
+		
+	}
+}
+	else if(option1==2)
+	{
+	cout<<"\n\tEnter 1 to enter data in Item Transaction : ";
+	cout<<"\n\tEnter 2 to view data in Item Transaction  :\t";
+	cout<<"\n\n\tEnter Your choice (1, 2) :\t";
+	cin>>option3;
+	if(option3==1)
+	{
+		Input_item_transaction();
+		
+	}
+	if(option3==2)
+	{
+		 view_item_transaction();
+	}
+	
+		
+	}
+	else
+	{
+		cout<<"\n\tInvalid input";
+	}
+	cout<<"\n\n\tWant to Exit (y/n) ?:";
+	cin>>ans;
+   }while(ans!='y');
+}
